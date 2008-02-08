@@ -1,0 +1,15 @@
+@html {
+  @body {
+    #application {
+      #header {
+        .container {
+          .statusbar {
+            .logo {
+              @strong { "Hello World" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

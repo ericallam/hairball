@@ -1,0 +1,132 @@
+grammar HTML3000
+  
+  rule element
+    div_element '{' whitespace element whitespace '}' sibling:element  {
+      def value(env)
+        div_element.open_value(env) + element.value(env) + div_element.close_value(env) + sibling.value(env)
+      end
+    }
+    /
+    standard_element '{' whitespace element whitespace '}' sibling:element  {
+      def value(env)
+        standard_element.open_value(env) + element.value(env) + standard_element.close_value(env) + sibling.value(env)
+      end
+    }
+    /
+    string
+    /
+    ruby
+    /
+    whitespace
+  end
+  
+  rule ruby
+    '%' (!'%' . )* '%'  {
+      def value(env)
+        eval(code, env).to_s
+      end
+      
+      def code
+        text_value.gsub(/^%/, "").gsub(/%$/, "")
+      end
+    }
+  end
+  
+  rule standard_element
+    whitespace standard_element_token element_name attributes {
+      def open_value(env)
+        "<" + element_name.value(env) + attributes.value(env) + ">"
+      end
+      
+      def close_value(env)
+        "</" + element_name.value(env) + ">"
+      end
+    }
+  end
+  
+  rule standard_element_token
+    "@"
+  end
+  
+  rule div_element
+    whitespace div_type attributes {
+      def open_value(env)
+        "<div " + div_type.value(env) + attributes.value(env) + ">"
+      end
+      
+      def close_value(env)
+        "</div>"
+      end
+    }
+  end
+  
+  rule div_type
+    class element_name {
+      def value(env)
+        "class='#{element_name.value(env)}'"
+      end
+    }
+    /
+    id element_name {
+      def value(env)
+        "id='#{element_name.value(env)}'"
+      end
+    }
+  end
+  
+  rule class
+    whitespace '.'
+  end
+  
+  rule id
+    whitespace '#'
+  end
+  
+  rule attributes
+    '[' whitespace attribute_pair more_attribute_pairs:(';' whitespace attribute_pair)* whitespace ']' whitespace {
+      def value(env)
+      	attribute_pairs.inject('') {|h, pair| h += pair.value(env) }
+	    end
+	
+  	  def attribute_pairs
+  		  [attribute_pair] + more_attribute_pairs.elements.map {|elt| elt.attribute_pair }
+  	  end
+    }
+    /
+    whitespace
+  end
+  
+  rule attribute_pair
+    element_name ':' string {
+      def value(env)
+        " " + element_name.value(env) + "='" + string.value(env) + "'"
+      end
+    }
+  end
+  
+  rule element_name
+    [a-zA-Z]+ [1-6]? {
+      def value(env)
+        text_value.to_s
+      end
+    }
+  end
+  
+  rule string
+    '"' (!'"' . / '\"')* '"' {
+    	def value(env)
+    		text_value.to_s.gsub('"', "").to_s
+    	end
+	  }
+  end
+  
+  rule whitespace
+    [\s]* {
+      def value(env)
+        ''
+      end
+    }
+  end
+
+
+end

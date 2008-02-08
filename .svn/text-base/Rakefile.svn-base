@@ -1,0 +1,8 @@
+require File.join(File.dirname(__FILE__), "lib", "html3000")
+require 'rake'
+
+desc "recreate the parser from the treetop grammar file"
+task :re_grammar do
+  puts "calling " + "tt " + File.join(File.dirname(__FILE__), "lib", "html3000", "html3000.treetop")
+  exec "tt " + File.join(File.dirname(__FILE__), "lib", "html3000", "html3000.treetop")
+end

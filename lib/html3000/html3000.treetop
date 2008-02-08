@@ -1,0 +1,186 @@
+grammar HTML3000
+  
+  rule element
+    div_element '{' space element space '}' sibling:element  {
+      def value(env)
+        div_element.open_value(env) + element.value(env) + div_element.close_value(env) + sibling.value(env)
+      end
+    }
+    /
+    standard_element '{' space element space '}' sibling:element  {
+      def value(env)
+        standard_element.open_value(env) + element.value(env) + standard_element.close_value(env) + sibling.value(env)
+      end
+    }
+    /
+    string
+    /
+    ruby
+    /
+    space
+  end
+  
+  rule ruby
+    block / single_line_output 
+  end
+  
+  rule single_line_output
+    !ruby_start_block !ruby_end_block '<%' (!'%>' . )* '%>'  {
+      def value(env)
+        " (" + code + ").to_s "
+      end
+      
+      def code
+        text_value.gsub(/^<%/, "").gsub(/%>$/, "")
+      end
+    }
+  end
+  
+  rule block
+    ruby_start_block space element space ruby_end_block space {
+      def value(env)
+        
+      end
+      
+      def code(env)
+        to_eval = ruby_start_block.code
+        to_eval += element.value(env)
+        to_eval += ruby_end_block.code
+      end
+    }
+  end
+  
+  rule ruby_start_block
+    space '<%' (!' do' . )* mandatory_space 'do' argument_list? space '%>' {
+      def code
+        text_value.gsub(/<%/, "").gsub(/%>/, "")
+      end
+    }
+  end
+  
+  rule ruby_end_block
+    '<%' space 'end' space '%>' {
+      def code
+        'end'
+      end
+    }
+  end
+  
+  rule argument_list
+    mandatory_space '|' parameter_with_comma* parameter_without_comma '|' space
+  end
+  
+  rule parameter_with_comma
+    space element_name space ',' space
+  end
+  
+  rule parameter_without_comma
+    space element_name space
+  end
+  
+  rule standard_element
+    space standard_element_token element_name attributes {
+      def open_value(env)
+        "<" + element_name.value(env) + attributes.value(env) + ">"
+      end
+      
+      def close_value(env)
+        "</" + element_name.value(env) + ">"
+      end
+    }
+  end
+  
+  rule standard_element_token
+    "@"
+  end
+  
+  rule div_element
+    space div_type attributes {
+      def open_value(env)
+        "<div " + div_type.value(env) + attributes.value(env) + ">"
+      end
+      
+      def close_value(env)
+        "</div>"
+      end
+    }
+  end
+  
+  rule div_type
+    class element_name {
+      def value(env)
+        "class='#{element_name.value(env)}'"
+      end
+    }
+    /
+    id element_name {
+      def value(env)
+        "id='#{element_name.value(env)}'"
+      end
+    }
+  end
+  
+  rule class
+    space '.'
+  end
+  
+  rule id
+    space '#'
+  end
+  
+  rule attributes
+    '[' space attribute_pair more_attribute_pairs:(';' space attribute_pair)* space ']' space {
+      def value(env)
+      	attribute_pairs.inject('') {|h, pair| h += pair.value(env) }
+	    end
+	
+  	  def attribute_pairs
+  		  [attribute_pair] + more_attribute_pairs.elements.map {|elt| elt.attribute_pair }
+  	  end
+    }
+    /
+    space
+  end
+  
+  rule attribute_pair
+    element_name ':' string {
+      def value(env)
+        " " + element_name.value(env) + "='" + string.value(env) + "'"
+      end
+    }
+  end
+  
+  rule element_name
+    [a-zA-Z]+ [1-6]? {
+      def value(env)
+        text_value.to_s
+      end
+    }
+  end
+  
+  rule string
+    '"' (!'"' . / '\"')* '"' {
+    	def value(env)
+    		text_value.to_s.gsub('"', "").to_s
+    	end
+	  }
+  end
+  
+  rule mandatory_space
+    [\s]+ {
+      def value(env)
+        ' '
+      end
+    }
+  end
+  
+  rule space
+    [\s]* {
+      def value(env)
+        ''
+      end
+    }
+  end
+
+
+end

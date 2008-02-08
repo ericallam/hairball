@@ -1,0 +1,19 @@
+@html{
+  @head {
+    @title { "This is the Big Show" }
+    @meta { "Here is some meta crap" }
+    @style[link:"http://google.com"] {}
+  }
+  @body {
+    .contentwrapper {
+      .header {
+        .leftheader { "Hello Left Header" }
+        .rightheader { "Hello Right Header" }
+      }
+      .content {
+        #postheader { "First Blog Post today" }
+        #postbody { "Stupid Blog post about nothing" }
+      }
+    }
+  }
+}
