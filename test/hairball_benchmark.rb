@@ -2,7 +2,7 @@ require 'test_helper'
 require 'haml'
 require 'benchmark'
 
-class HTML3000BenchmarksTest < Test::Unit::TestCase
+class HairballBenchmarksTest < Test::Unit::TestCase
   include ParserTestHelper
   
   def setup
