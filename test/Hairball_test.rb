@@ -1,5 +1,5 @@
 require "test_helper"
-Treetop.load File.join(File.dirname(__FILE__), '../lib/html3000/hairball')
+Treetop.load File.join(File.dirname(__FILE__), '../lib/hairball/hairball')
 
 class HairballTest < Test::Unit::TestCase
   include ParserTestHelper

@@ -4,8 +4,8 @@ require 'rake/testtask'
 
 desc "recreate the parser from the treetop grammar file"
 task :build do
-  puts "calling " + "tt " + File.join(File.dirname(__FILE__), "lib", "html3000", "hairball.treetop")
-  exec "tt " + File.join(File.dirname(__FILE__), "lib", "html3000", "hairball.treetop")
+  puts "calling " + "tt " + File.join(File.dirname(__FILE__), "lib", "hairball", "hairball.treetop")
+  exec "tt " + File.join(File.dirname(__FILE__), "lib", "hairball", "hairball.treetop")
 end
 
 desc "run all tests"

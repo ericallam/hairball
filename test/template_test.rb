@@ -1,6 +1,6 @@
 require "test_helper"
 require 'ostruct'
-Treetop.load File.join(File.dirname(__FILE__), '../lib/html3000/hairball')
+Treetop.load File.join(File.dirname(__FILE__), '../lib/hairball/hairball')
 
 class TemplateTest < Test::Unit::TestCase
   
