@@ -17,6 +17,17 @@ class HTML3000Test < Test::Unit::TestCase
     assert_parse_failure('@h$ { }')
   end
   
+  def test_attributes_parsing_on_standard_elements
+    assert_parses('@content[key:"value"] { }')
+    assert_parses('@content[key:"value"] {}')
+    assert_parses('@content[key:"value";another:"value"] {}')
+    assert_parses('@content[key:"value"; another:"value"] {}')
+    assert_parse_failure('@content[key:"value] {}')
+    assert_parse_failure('@content[key:value] {}')
+    assert_parse_failure('@content[key] {}')
+    assert_parse_failure('@content["value"] {}')
+  end
+  
   def test_ruby_parsing
     assert_parses("<% Object.class %>")
   end
@@ -42,16 +53,6 @@ class HTML3000Test < Test::Unit::TestCase
     assert_parse_failure("<% Object.new do |one,| %><% end %>")
     assert_parse_failure("<% Object.new do |,one| %><% end %>")
     assert_parse_failure("<% Object.new do |one,two,three,| %><% end %>")  
-  end
-  
-  def test_ruby_block_value
-    to_parse = %q{
-      <% [1,2,3].collect do |i| %>
-          <% i %>
-      <% end %>
-    }
-    assert_parses(to_parse)
-    assert_parse_value(to_parse, "123")
   end
   
   def test_ruby_multiline_block_parsing
@@ -123,45 +124,6 @@ class HTML3000Test < Test::Unit::TestCase
     assert_parses(to_parse)
   end
   
-  # def test_parsing_non_tag_siblings
-  #   to_parse = <<-3001.chomp
-  #       @world { 
-  #         @p { }
-  #         "Hello" 
-  #       }
-  #     3001
-  #   assert_parses(to_parse)
-  # end
-  
-  def test_parsing_siblings_value
-    to_parse = <<-3002.chomp
-      @html {
-        @body { }
-        @content { }
-      }
-      3002
-    assert_parse_value to_parse, "<html><body></body><content></content></html>"
-  end
-  
-  def test_ruby_value
-    assert_parse_value "<% Object.class %>", "Class"
-    assert_parse_value "<% 1 + 2 %>", "3"
-    assert_parse_value "<% 1 * 2 %>", "2"
-    assert_parse_value "<% nil %>", ""
-  end
-
-  
-def test_attributes_parsing_on_standard_elements
-    assert_parses('@content[key:"value"] { }')
-    assert_parses('@content[key:"value"] {}')
-    assert_parses('@content[key:"value";another:"value"] {}')
-    assert_parses('@content[key:"value"; another:"value"] {}')
-    assert_parse_failure('@content[key:"value] {}')
-    assert_parse_failure('@content[key:value] {}')
-    assert_parse_failure('@content[key] {}')
-    assert_parse_failure('@content["value"] {}')
-  end
-  
   def test_attributes_parsing_on_div_elements
     assert_parses('.content[key:"value"] {}')
     assert_parses('#content[key:"value"] {}')
@@ -172,17 +134,7 @@ def test_attributes_parsing_on_standard_elements
     assert_parse_failure('#content[key] {}')
     assert_parse_failure('.content["value"] {}')
   end
-
-  def test_attributes_value_on_standard_elements
-    assert_parse_value '@em[key:"value"] {}', "<em key='value'></em>"
-  end
   
-  def test_multiple_attributes_value
-    assert_parse_value '@em[key:"value";hello:"world"] {}', "<em key='value' hello='world'></em>"
-    assert_parse_value '@em[key:"value";hello:"world"] { "Hello World" }', "<em key='value' hello='world'>Hello World</em>"
-    assert_parse_value '.em[key:"value";hello:"world"] { "Hello World" }', "<div class='em' key='value' hello='world'>Hello World</div>"
-  end
-
   def test_div_with_class
     assert_parses('.content{}')
     assert_parses('.content { }')
@@ -213,11 +165,6 @@ def test_attributes_parsing_on_standard_elements
     assert_parse_failure("@really_strong")
   end
   
-  def test_any_html_element_value
-    assert_parse_value "@strong {}", "<strong></strong>"
-    assert_parse_value '@em { @h1 { "This is the Title Text" } }', "<em><h1>This is the Title Text</h1></em>"
-  end
-  
   def test_div_with_nesting
     assert_parses(".content { }")
     assert_parses('.content { "some tex" }')
@@ -231,26 +178,56 @@ def test_attributes_parsing_on_standard_elements
     assert_parse_failure("#content {{{}}")
   end
   
-  def test_div_class_value
-    assert_parse_value ".content {}", "<div class='content'></div>"
-    assert_parse_value '.content { "hello world" }', "<div class='content'>hello world</div>"
-    assert_parse_value '.content { .again {} }', "<div class='content'><div class='again'></div></div>"
-    assert_parse_value '.content { .again { "hello world" } }', "<div class='content'><div class='again'>hello world</div></div>"
+  # ==================
+  # = Source Testing =
+  # ==================
+  
+  def test_parsing_siblings_source_and_result
+    to_parse = %q{@html {@body { }@content { }}}.chomp
+    assert_source to_parse, %q{_src='';_src.concat('<html>');_src.concat('<body>');_src.concat('</body>');_src.concat('<content>');_src.concat('</content>');_src.concat('</html>');_src;}.chomp
+    assert_result to_parse, "<html><body></body><content></content></html>"
   end
   
-  def test_div_id_value
-    assert_parse_value "#content {}", "<div id='content'></div>"
-    assert_parse_value '#content { "hello world" }', "<div id='content'>hello world</div>"
-    assert_parse_value '#content { #again {} }', "<div id='content'><div id='again'></div></div>"
-    assert_parse_value '#content { #again { "hello world" } }', "<div id='content'><div id='again'>hello world</div></div>"
+  def test_ruby_source_and_result
+    assert_source "<% Object.class %>", "_src='';_src.concat(( Object.class ).to_s);_src;"
+    assert_result "<% Object.class %>", "Class"
   end
   
-  def test_div_class_and_id_value
-    assert_parse_value '#content { .again { "hello world" } }', "<div id='content'><div class='again'>hello world</div></div>"
+  def test_ruby_block_source_and_result
+    to_parse = %q{<%[1,2,3].collect do |i|%><% i %><% end %>}
+    assert_parses(to_parse)
+    assert_source to_parse, %q{_src='';[1,2,3].collect do |i|;_src.concat(( i ).to_s);end;_src;}
+    assert_result to_parse, "123"
+  end
+    
+  def test_attributes_source_on_standard_elements
+    to_parse = '@em[key:"value"] {}'
+    assert_source to_parse, %{_src='';_src.concat('<em key="value">');_src.concat('</em>');_src;}
+    assert_result to_parse, %{<em key="value"></em>}
+  end
+    
+  def test_any_html_element_source
+    assert_source "@strong {}", %{_src='';_src.concat('<strong>');_src.concat('</strong>');_src;}
+    assert_source '@em { @h1 { "This is the Title Text" } }', %{_src='';_src.concat('<em>');_src.concat('<h1>');_src.concat('This is the Title Text');_src.concat('</h1>');_src.concat('</em>');_src;}
+    assert_result '@em { @h1 { "This is the Title Text" } }', "<em><h1>This is the Title Text</h1></em>"
+  end
+  
+  def test_div_class_source
+    assert_source ".content {}", %{_src='';_src.concat('<div class="content">');_src.concat('</div>');_src;}
+    assert_source '.content { "hello world" }', %{_src='';_src.concat('<div class="content">');_src.concat('hello world');_src.concat('</div>');_src;}
+    assert_result '.content { "hello world" }', %{<div class="content">hello world</div>}
+  end
+    
+  def test_div_id_source
+    assert_result "#content {}", %{<div id="content"></div>}
   end
       
-  def assert_parse_value(to_parse, expect)
-    assert_equal parse(to_parse).value(binding), expect
+  def assert_result(to_parse, expect)
+    assert_equal eval(parse(to_parse).source), expect
+  end
+  
+  def assert_source(to_parse, src)
+    assert_equal parse(to_parse).source, src
   end
   
   def assert_parses(input)

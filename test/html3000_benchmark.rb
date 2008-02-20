@@ -16,7 +16,7 @@ class HTML3000BenchmarksTest < Test::Unit::TestCase
   end
   
   def do_html3000(template)
-    parse(fixture(template)).value(binding)
+    eval parse(fixture(template)).source, binding
   end
   
   def test_small_template

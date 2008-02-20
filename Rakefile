@@ -26,3 +26,9 @@ task :benchmark do
   end
 end
 
+desc "clean out the rbc files"
+task :clean do
+  rbc_files = Dir["*.rbc"] + Dir["**/*.rbc"]
+  rbc_files.each {|f| File.delete(f) }
+end
+

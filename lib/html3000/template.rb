@@ -8,7 +8,11 @@ module HTML3000
     end
 
     def to_html
-      parser.parse(@template).value(binding)
+      eval(src, binding)
+    end
+    
+    def src
+      parser.parse(@template).source
     end
 
     private

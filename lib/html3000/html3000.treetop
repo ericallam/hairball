@@ -1,23 +1,150 @@
 grammar HTML3000
+
+  rule source
+    space element {
+      def source
+        "_src='';" + element.source + "_src;"
+      end
+    }
+  end
   
   rule element
     div_element '{' space element space '}' sibling:element  {
-      def value(env)
-        div_element.open_value(env) + element.value(env) + div_element.close_value(env) + sibling.value(env)
+      def source
+        div_element.open_source + element.source + div_element.close_source + sibling.source
       end
     }
     /
     standard_element '{' space element space '}' sibling:element  {
-      def value(env)
-        standard_element.open_value(env) + element.value(env) + standard_element.close_value(env) + sibling.value(env)
+      def source
+        standard_element.open_source + element.source + standard_element.close_source + sibling.source
       end
     }
     /
-    string
+    space string space {
+      def source
+        "_src.concat('" + string.source + "');"
+      end
+    }
     /
     ruby
     /
     space
+  end
+  
+  rule standard_element
+    space standard_element_token element_name attributes {
+      def open_source
+        "_src.concat('<" + element_name.source + attributes.source + ">');"
+      end
+      # @html[hello:"world"]
+      # => _src.concat('<html hello="world">');
+      
+      def close_source
+        "_src.concat('</" + element_name.source + ">');"
+      end
+      # _src.concat('</html>');
+    }
+  end
+  
+  rule standard_element_token
+    "@"
+  end
+  
+  rule div_element
+    space div_type attributes {
+      def open_source
+        "_src.concat('<div " + div_type.source + attributes.source + ">');"
+      end
+      # .hello[world:"ok"]
+      # => _src.concat('<div class="hello" world="ok">');
+      
+      def close_source
+        "_src.concat('</div>');"
+      end
+      # _src.concat('</div>');
+    }
+  end
+  
+  rule div_type
+    class element_name {
+      def source
+        "class=\"" + element_name.source + "\""
+      end
+    }
+    /
+    id element_name {
+      def source
+        "id=\"" + element_name.source + "\""
+      end
+    }
+  end
+  
+  rule class
+    space '.'
+  end
+  
+  rule id
+    space '#'
+  end
+  
+  rule attributes
+    '[' space attribute_pair more_attribute_pairs:(';' space attribute_pair)* space ']' space {
+      def source
+      	attribute_pairs.inject("") do |h, pair| 
+      	  h += pair.source 
+      	end
+	    end
+	    # [class:"hello";id:"world"] 
+	    # => class='hello' id='world'
+	
+  	  def attribute_pairs
+  		  [attribute_pair] + more_attribute_pairs.elements.map {|elt| elt.attribute_pair }
+  	  end
+    }
+    /
+    space
+  end
+  
+  rule attribute_pair
+    element_name ':' string {
+      def source
+        ' ' + element_name.source + '="' + string.source + '"'
+      end
+      # class:"content" => class='content'
+    }
+  end
+  
+  rule element_name
+    [a-zA-Z]+ [1-6]? {
+      def source
+        text_value.to_s
+      end
+    }
+  end
+  
+  rule string
+    '"' (!'"' . / '\"')* '"' {
+    	def source
+    		%{#{text_value.gsub('"', '')}}
+    	end
+	  }
+  end
+  
+  rule mandatory_space
+    [\s]+ {
+      def source
+        ' '
+      end
+    }
+  end
+  
+  rule space
+    [\s]* {
+      def source
+        ''
+      end
+    }
   end
   
   rule ruby
@@ -26,8 +153,8 @@ grammar HTML3000
   
   rule single_line_output
     !ruby_start_block !ruby_end_block '<%' (!'%>' . )* '%>'  {
-      def value(env)
-        " (" + code + ").to_s "
+      def source
+        "_src.concat((" + code + ").to_s);"
       end
       
       def code
@@ -38,30 +165,24 @@ grammar HTML3000
   
   rule block
     ruby_start_block space element space ruby_end_block space {
-      def value(env)
-        
-      end
-      
-      def code(env)
-        to_eval = ruby_start_block.code
-        to_eval += element.value(env)
-        to_eval += ruby_end_block.code
+      def source
+        ruby_start_block.source +  element.source + ruby_end_block.source
       end
     }
   end
   
   rule ruby_start_block
     space '<%' (!' do' . )* mandatory_space 'do' argument_list? space '%>' {
-      def code
-        text_value.gsub(/<%/, "").gsub(/%>/, "")
+      def source
+        text_value.gsub(/<%/, "").gsub(/%>/, "").strip + ";"
       end
     }
   end
   
   rule ruby_end_block
     '<%' space 'end' space '%>' {
-      def code
-        'end'
+      def source
+        'end;'
       end
     }
   end
@@ -78,109 +199,4 @@ grammar HTML3000
     space element_name space
   end
   
-  rule standard_element
-    space standard_element_token element_name attributes {
-      def open_value(env)
-        "<" + element_name.value(env) + attributes.value(env) + ">"
-      end
-      
-      def close_value(env)
-        "</" + element_name.value(env) + ">"
-      end
-    }
-  end
-  
-  rule standard_element_token
-    "@"
-  end
-  
-  rule div_element
-    space div_type attributes {
-      def open_value(env)
-        "<div " + div_type.value(env) + attributes.value(env) + ">"
-      end
-      
-      def close_value(env)
-        "</div>"
-      end
-    }
-  end
-  
-  rule div_type
-    class element_name {
-      def value(env)
-        "class='#{element_name.value(env)}'"
-      end
-    }
-    /
-    id element_name {
-      def value(env)
-        "id='#{element_name.value(env)}'"
-      end
-    }
-  end
-  
-  rule class
-    space '.'
-  end
-  
-  rule id
-    space '#'
-  end
-  
-  rule attributes
-    '[' space attribute_pair more_attribute_pairs:(';' space attribute_pair)* space ']' space {
-      def value(env)
-      	attribute_pairs.inject('') {|h, pair| h += pair.value(env) }
-	    end
-	
-  	  def attribute_pairs
-  		  [attribute_pair] + more_attribute_pairs.elements.map {|elt| elt.attribute_pair }
-  	  end
-    }
-    /
-    space
-  end
-  
-  rule attribute_pair
-    element_name ':' string {
-      def value(env)
-        " " + element_name.value(env) + "='" + string.value(env) + "'"
-      end
-    }
-  end
-  
-  rule element_name
-    [a-zA-Z]+ [1-6]? {
-      def value(env)
-        text_value.to_s
-      end
-    }
-  end
-  
-  rule string
-    '"' (!'"' . / '\"')* '"' {
-    	def value(env)
-    		text_value.to_s.gsub('"', "").to_s
-    	end
-	  }
-  end
-  
-  rule mandatory_space
-    [\s]+ {
-      def value(env)
-        ' '
-      end
-    }
-  end
-  
-  rule space
-    [\s]* {
-      def value(env)
-        ''
-      end
-    }
-  end
-
-
 end
