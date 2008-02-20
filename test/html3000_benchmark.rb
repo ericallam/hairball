@@ -6,7 +6,7 @@ class HTML3000BenchmarksTest < Test::Unit::TestCase
   include ParserTestHelper
   
   def setup
-    @parser ||= HTML3000Parser.new
+    @parser ||= HairballParser.new
   end
   
   def do_haml(template)
@@ -15,7 +15,7 @@ class HTML3000BenchmarksTest < Test::Unit::TestCase
     engine.render
   end
   
-  def do_html3000(template)
+  def do_hairball(template)
     eval parse(fixture(template)).source, binding
   end
   
@@ -23,7 +23,7 @@ class HTML3000BenchmarksTest < Test::Unit::TestCase
     puts "== TEST SMALL TEMPLATE =="
     Benchmark.bmbm do |x|
       x.report("HAML")  { do_haml("show.haml")  }
-      x.report("HTML3000") { do_html3000("show.3000") }
+      x.report("Hairball") { do_hairball("show.habl") }
     end
   end
   
@@ -31,7 +31,7 @@ class HTML3000BenchmarksTest < Test::Unit::TestCase
     puts "== TEST BIG TEMPLATE =="
     Benchmark.bmbm do |x|
       x.report("HAML")  { do_haml("big_show.haml")  }
-      x.report("HTML3000") { do_html3000("big_show.3000") }
+      x.report("Hairball") { do_hairball("big_show.habl") }
     end
   end
   

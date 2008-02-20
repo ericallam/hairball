@@ -1,11 +1,11 @@
 require "test_helper"
-Treetop.load File.join(File.dirname(__FILE__), '../lib/html3000/html3000')
+Treetop.load File.join(File.dirname(__FILE__), '../lib/html3000/hairball')
 
 class HTML3000Test < Test::Unit::TestCase
   include ParserTestHelper
   
   def setup
-    @parser = HTML3000Parser.new
+    @parser = HairballParser.new
   end
   
   def test_element_name

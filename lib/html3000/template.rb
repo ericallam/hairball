@@ -1,6 +1,6 @@
-module HTML3000
+module Hairball
   class Template3000
-    include HTML3000
+    include Hairball
 
     def initialize(path, env={})
       @template = read_file(path)
@@ -18,7 +18,7 @@ module HTML3000
     private
 
     def parser
-      @parser ||= HTML3000Parser.new
+      @parser ||= HairballParser.new
     end
 
     def set_instance_variables(vars)
@@ -28,7 +28,7 @@ module HTML3000
     end
 
     def read_file(path)
-      File.read(File.join(root_path, "#{path.to_s}.3000")).chomp
+      File.read(File.join(root_path, "#{path.to_s}.habl")).chomp
     end
 
     def root_path

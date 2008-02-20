@@ -1,11 +1,11 @@
-require File.join(File.dirname(__FILE__), "lib", "html3000")
+require File.join(File.dirname(__FILE__), "lib", "hairball")
 require 'rake'
 require 'rake/testtask'
 
 desc "recreate the parser from the treetop grammar file"
 task :build do
-  puts "calling " + "tt " + File.join(File.dirname(__FILE__), "lib", "html3000", "html3000.treetop")
-  exec "tt " + File.join(File.dirname(__FILE__), "lib", "html3000", "html3000.treetop")
+  puts "calling " + "tt " + File.join(File.dirname(__FILE__), "lib", "html3000", "hairball.treetop")
+  exec "tt " + File.join(File.dirname(__FILE__), "lib", "html3000", "hairball.treetop")
 end
 
 desc "run all tests"
@@ -17,7 +17,7 @@ task :test do
   end 
 end
 
-desc "run benchmarks to compare HTML3000 and HAML"
+desc "run benchmarks to compare Hairball and HAML"
 task :benchmark do
   Rake::TestTask.new do |t|
     t.libs << "test"

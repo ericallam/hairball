@@ -1,0 +1,3 @@
+Hairball is a Haml clone built using the Treetop parser generator library (http://treetop.rubyforge.org/)
+
+Really this was just a way for me to try out Treetop, so I put it up so other people could check out the .treetop file.

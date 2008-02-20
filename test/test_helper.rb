@@ -1,5 +1,5 @@
 require 'test/unit'
-require File.join(File.dirname(__FILE__), '../lib/html3000')
+require File.join(File.dirname(__FILE__), '../lib/hairball')
 
 TEMPLATE_ROOT = File.join(File.dirname(__FILE__), "fixtures")
 

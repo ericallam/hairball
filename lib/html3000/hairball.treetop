@@ -1,4 +1,4 @@
-grammar HTML3000
+grammar Hairball
 
   rule source
     space element {

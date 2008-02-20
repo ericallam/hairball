@@ -1,4 +1,4 @@
-module HTML3000
+module Hairball
   include Treetop::Runtime
 
   def root
@@ -1699,6 +1699,6 @@ module HTML3000
 
 end
 
-class HTML3000Parser < Treetop::Runtime::CompiledParser
-  include HTML3000
+class HairballParser < Treetop::Runtime::CompiledParser
+  include Hairball
 end
